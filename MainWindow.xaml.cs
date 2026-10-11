@@ -133,6 +133,101 @@ namespace ViewCraft
             }
         }
 
+        private void MenuOpenMipiRaw_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog
+            {
+                Title = "Open MIPI CSI-2 RAW / Sensor Dump — ViewCraft",
+                Filter = "MIPI RAW & Sensor Dumps (*.raw;*.mipi;*.bayer;*.nvraw;*.bin)|*.raw;*.mipi;*.bayer;*.nvraw;*.bin|All Files (*.*)|*.*"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                OpenMipiRawFile(dlg.FileName);
+            }
+        }
+
+        private async void OpenMipiRawFile(string filePath)
+        {
+            var mipiDlg = new MipiRawDialog(filePath) { Owner = this };
+            if (mipiDlg.ShowDialog() == true)
+            {
+                try
+                {
+                    var p = mipiDlg.ResultParameters;
+                    var (bmp, masterImg) = await MipiRawEngine.DecodeMipiRawAsync(filePath, p);
+
+                    _currentDecoded = new DecodedImageResult
+                    {
+                        Width = p.Width,
+                        Height = p.Height,
+                        Format = $"MIPI {p.Format} ({p.Pattern})",
+                        BitDepth = p.Format == MipiFormat.Raw8 ? 8 : (p.Format == MipiFormat.MipiRaw10 ? 10 : (p.Format == MipiFormat.MipiRaw12 ? 12 : 16)),
+                        ColorSpace = "Linear sRGB",
+                        MasterMagickImage = masterImg
+                    };
+                    _currentDecoded.Frames.Add(new DecodedFrame
+                    {
+                        Source = bmp,
+                        Width = p.Width,
+                        Height = p.Height,
+                        DelayMs = 100
+                    });
+
+                    var item = _imageItems.FirstOrDefault(x => string.Equals(x.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+                    if (item == null)
+                    {
+                        item = new ImageItem
+                        {
+                            FilePath = filePath,
+                            Width = p.Width,
+                            Height = p.Height,
+                            FormatName = $"MIPI {p.Format}",
+                            Thumbnail = bmp,
+                            FileSizeBytes = new FileInfo(filePath).Length
+                        };
+                        _imageItems.Insert(0, item);
+                        _currentIndex = 0;
+                    }
+
+                    PanelEmptyState.Visibility = Visibility.Collapsed;
+                    Title = $"{Path.GetFileName(filePath)} [MIPI RAW {p.Width}×{p.Height} {p.Format}] — ViewCraft Studio";
+
+                    StatusDimensions.Text = $"{p.Width} × {p.Height} px";
+                    StatusFormat.Text = $"MIPI {p.Format} {p.Pattern}";
+                    StatusFileSize.Text = item.FileSizeFormatted;
+
+                    FitToWindow();
+                    _adjustments.Reset();
+                    UpdateAdjustmentControlsFromModel();
+                    UpdateDisplayImage(bmp);
+                    _ = UpdateHistogramAsync(bmp);
+
+                    ImgMiniMap.Source = bmp;
+                    UpdateMiniMapViewport();
+
+                    _currentMetadata = new ImageMetadata
+                    {
+                        Format = $"MIPI CSI-2 {p.Format}",
+                        Width = p.Width,
+                        Height = p.Height,
+                        BitDepth = p.Format == MipiFormat.Raw8 ? 8 : (p.Format == MipiFormat.MipiRaw10 ? 10 : 12),
+                        ColorSpace = "Linear Bayer CFA Sensor",
+                        Compression = p.Format == MipiFormat.Raw8 ? "Unpacked 8-bit" : "MIPI CSI-2 Packed",
+                        FileSizeBytes = item.FileSizeBytes,
+                        CameraMake = "Embedded CSI-2 / ISP Dump",
+                        CameraModel = $"{p.Pattern} Bayer Pattern Sensor",
+                        Software = $"ViewCraft MIPI Demuxer (BL={p.BlackLevel}, R={p.RedGain:F1}, B={p.BlueGain:F1})"
+                    };
+                    PopulateMetadataView(_currentMetadata);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to decode MIPI RAW: {ex.Message}", "ViewCraft Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
         private void LoadFileAndDirectory(string selectedFilePath)
         {
             string dir = Path.GetDirectoryName(selectedFilePath) ?? string.Empty;
@@ -222,6 +317,13 @@ namespace ViewCraft
 
             // Stop any running animations
             StopAnimation();
+
+            string ext = item.Extension.ToLowerInvariant();
+            if (ext == ".raw" || ext == ".mipi" || ext == ".bayer" || ext == ".nvraw")
+            {
+                OpenMipiRawFile(item.FilePath);
+                return;
+            }
 
             try
             {
@@ -1092,6 +1194,7 @@ namespace ViewCraft
                     case Key.D7 or Key.NumPad7: SetColorLabel("Yellow"); e.Handled = true; return;
                     case Key.D8 or Key.NumPad8: SetColorLabel("Green"); e.Handled = true; return;
                     case Key.D9 or Key.NumPad9: SetColorLabel("Blue"); e.Handled = true; return;
+                    case Key.M: MenuOpenMipiRaw_Click(this, new RoutedEventArgs()); e.Handled = true; return;
                 }
             }
 

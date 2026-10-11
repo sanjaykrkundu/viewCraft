@@ -38,9 +38,10 @@ namespace ViewCraft.Engine
             ".tif", ".tiff", ".btf", // BigTIFF
             // Next-Gen & HDR
             ".avif", ".heic", ".heif", ".jxl", ".exr", ".hdr", ".rgbe",
-            // Camera RAW
+            // Camera RAW & MIPI CSI-2 Sensor Dumps
             ".dng", ".cr2", ".cr3", ".nef", ".nrw", ".arw", ".srf", ".sr2", ".raf", ".orf", ".rw2", ".pef", 
             ".ptx", ".x3f", ".3fr", ".erf", ".mef", ".mos", ".mrw", ".srw", ".kdc", ".dcr",
+            ".raw", ".mipi", ".bayer", ".nvraw",
             // Adobe & Vector
             ".psd", ".psb", ".ai", ".eps", ".svg", ".svgz", ".pdf",
             // Medical & Scientific
@@ -62,10 +63,11 @@ namespace ViewCraft.Engine
 
         public static string GetFileFilter()
         {
-            return "All Supported Images|*.jpg;*.jpeg;*.png;*.webp;*.avif;*.jxl;*.heic;*.heif;*.gif;*.bmp;*.tiff;*.tif;*.psd;*.psb;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.orf;*.rw2;*.exr;*.hdr;*.svg;*.dcm;*.fits;*.dds;*.tga;*.pcx;*.ico;*.pdf;*.eps|" +
+            return "All Supported Images|*.jpg;*.jpeg;*.png;*.webp;*.avif;*.jxl;*.heic;*.heif;*.gif;*.bmp;*.tiff;*.tif;*.psd;*.psb;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.orf;*.rw2;*.exr;*.hdr;*.svg;*.dcm;*.fits;*.dds;*.tga;*.pcx;*.ico;*.pdf;*.eps;*.raw;*.mipi;*.bayer;*.nvraw|" +
                    "Standard Web Images (*.jpg;*.png;*.webp;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.webp;*.gif;*.bmp|" +
                    "Next-Gen Formats (*.avif;*.jxl;*.heic;*.heif;*.exr;*.hdr)|*.avif;*.jxl;*.heic;*.heif;*.exr;*.hdr|" +
-                   "Camera RAW (*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.orf;*.rw2)|*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.orf;*.rw2|" +
+                   "Camera RAW & MIPI Dumps (*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.raw;*.mipi;*.bayer)|*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.orf;*.rw2;*.raw;*.mipi;*.bayer;*.nvraw|" +
+                   "MIPI CSI-2 Sensor RAW (*.raw;*.mipi;*.bayer;*.nvraw)|*.raw;*.mipi;*.bayer;*.nvraw|" +
                    "Adobe Photoshop (*.psd;*.psb;*.ai;*.eps)|*.psd;*.psb;*.ai;*.eps|" +
                    "Textures & Game Assets (*.dds;*.tga;*.ktx)|*.dds;*.tga;*.ktx|" +
                    "Medical & Scientific (*.dcm;*.fits)|*.dcm;*.dicom;*.fits;*.fit|" +

@@ -15,7 +15,8 @@ ViewCraft is designed from the ground up for extreme speed, ultra-wide format co
 
 ### 1. 🌐 Universal Format Support (200+ Formats)
 - **Modern & Next-Gen**: AVIF, JPEG XL (`.jxl`), HEIC / HEIF, WebP, OpenEXR (`.exr`), Radiance HDR (`.hdr`).
-- **Camera RAW (1,000+ camera models)**: Canon (`.cr2`, `.cr3`), Nikon (`.nef`, `.nrw`), Sony (`.arw`, `.sr2`), Fujifilm (`.raf`), Olympus (`.orf`), Panasonic (`.rw2`), Pentax (`.pef`), Adobe (`.dng`), Hasselblad (`.3fr`), Leica, etc.
+- **Camera RAW & MIPI CSI-2 Dumps**: Canon (`.cr2`, `.cr3`), Nikon (`.nef`, `.nrw`), Sony (`.arw`, `.sr2`), Fujifilm (`.raf`), Olympus (`.orf`), Panasonic (`.rw2`), Pentax (`.pef`), Adobe (`.dng`), Hasselblad (`.3fr`), Leica, etc.
+- **Embedded & Sensor RAW (MIPI CSI-2)**: Packed MIPI RAW10 (`.raw`, `.mipi`), Packed MIPI RAW12, RAW8, RAW16 (LE/BE) sensor dumps with automatic resolution detection and bilinear Bayer CFA demosaicing (RGGB, BGGR, GRBG, GBRG, Mono).
 - **Adobe Creative Suite**: Multi-layer Photoshop (`.psd`, `.psb`), Illustrator (`.ai`), Vector (`.svg`, `.eps`, `.pdf`).
 - **Standard Web & Desktop**: JPEG, PNG, APNG, GIF (animated), BMP, multi-page TIFF, BigTIFF (`.btf`), ICO, CUR.
 - **Scientific & Medical**: DICOM (`.dcm`), FITS (`.fits`), MATLAB (`.mat`).
