@@ -1,0 +1,10 @@
+## Visual Studio / .NET Core / .NET 9
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.idea/
+*.DotSettings.user

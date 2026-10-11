@@ -1,0 +1,542 @@
+<Window x:Class="ViewCraft.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:ViewCraft.Controls"
+        Title="ViewCraft — Universal Studio Image Viewer" 
+        Height="850" Width="1350"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="#18181b" Foreground="#f4f4f5"
+        KeyDown="Window_KeyDown">
+
+    <Window.Resources>
+        <!-- Dark Studio Theme Styles -->
+        <SolidColorBrush x:Key="BgDark" Color="#18181b"/>
+        <SolidColorBrush x:Key="BgPanel" Color="#242427"/>
+        <SolidColorBrush x:Key="BgHover" Color="#2e2e33"/>
+        <SolidColorBrush x:Key="BorderDark" Color="#3f3f46"/>
+        <SolidColorBrush x:Key="AccentAmber" Color="#f59e0b"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#a1a1aa"/>
+        <SolidColorBrush x:Key="TextLight" Color="#fafafa"/>
+
+        <Style TargetType="Menu">
+            <Setter Property="Background" Value="#202023"/>
+            <Setter Property="Foreground" Value="#d4d4d8"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="#202023"/>
+            <Setter Property="Foreground" Value="#d4d4d8"/>
+            <Setter Property="Padding" Value="8,4"/>
+        </Style>
+        <Style x:Key="ToolButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#e4e4e7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#333338"/>
+                    <Setter Property="Foreground" Value="#f59e0b"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="#202023"/>
+            <Setter Property="Foreground" Value="#a1a1aa"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#27272a"/>
+                    <Setter Property="Foreground" Value="#f59e0b"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Menu & Toolbar -->
+            <RowDefinition Height="*"/>    <!-- Main Viewport & Sidebar -->
+            <RowDefinition Height="Auto"/> <!-- Animation Player (if animated) -->
+            <RowDefinition Height="Auto"/> <!-- Filmstrip -->
+            <RowDefinition Height="Auto"/> <!-- Status Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- TOP BAR: Menus + Toolstrip -->
+        <StackPanel Grid.Row="0">
+            <!-- Native Menu Bar -->
+            <Menu BorderThickness="0,0,0,1" BorderBrush="#333338">
+                <MenuItem Header="_File">
+                    <MenuItem Header="_Open Image... (Ctrl+O)" Click="MenuOpenImage_Click"/>
+                    <MenuItem Header="Open _Folder... (Ctrl+Shift+O)" Click="MenuOpenFolder_Click"/>
+                    <MenuItem Header="_Reload Image (F5)" Click="MenuReload_Click"/>
+                    <Separator Background="#3f3f46"/>
+                    <MenuItem Header="_Save / Export As... (Ctrl+S)" Click="MenuExport_Click"/>
+                    <MenuItem Header="_Copy Image to Clipboard (Ctrl+C)" Click="MenuCopyImage_Click"/>
+                    <MenuItem Header="Copy File _Path" Click="MenuCopyPath_Click"/>
+                    <MenuItem Header="Reveal in _File Explorer" Click="MenuRevealExplorer_Click"/>
+                    <Separator Background="#3f3f46"/>
+                    <MenuItem Header="_Delete to Recycle Bin (Del)" Click="MenuDelete_Click"/>
+                    <Separator Background="#3f3f46"/>
+                    <MenuItem Header="E_xit" Click="MenuExit_Click"/>
+                </MenuItem>
+                <MenuItem Header="_View">
+                    <MenuItem Header="_Fit to Window (0)" Click="MenuFit_Click"/>
+                    <MenuItem Header="_Actual Size 100% (1)" Click="MenuActualSize_Click"/>
+                    <MenuItem Header="Zoom _In (+)" Click="MenuZoomIn_Click"/>
+                    <MenuItem Header="Zoom _Out (-)" Click="MenuZoomOut_Click"/>
+                    <MenuItem x:Name="MenuLockZoom" Header="Lock _Zoom Across Images" IsCheckable="True" Checked="MenuLockZoom_Checked" Unchecked="MenuLockZoom_Checked"/>
+                    <Separator Background="#3f3f46"/>
+                    <MenuItem Header="Toggle _Full Screen (F11)" Click="MenuFullScreen_Click"/>
+                    <MenuItem Header="Toggle _Inspector (I)" Click="MenuToggleInspector_Click"/>
+                    <MenuItem Header="Toggle _Filmstrip (F)" Click="MenuToggleFilmstrip_Click"/>
+                    <MenuItem Header="Toggle _Mini-Map Navigator (M)" Click="MenuToggleMiniMap_Click"/>
+                </MenuItem>
+                <MenuItem Header="_Transform">
+                    <MenuItem Header="Rotate 90° _CW (R)" Click="MenuRotateCW_Click"/>
+                    <MenuItem Header="Rotate 90° CC_W (Shift+R)" Click="MenuRotateCCW_Click"/>
+                    <MenuItem Header="Rotate 180°" Click="MenuRotate180_Click"/>
+                    <Separator Background="#3f3f46"/>
+                    <MenuItem Header="Flip _Horizontal (H)" Click="MenuFlipH_Click"/>
+                    <MenuItem Header="Flip _Vertical (V)" Click="MenuFlipV_Click"/>
+                </MenuItem>
+                <MenuItem Header="_Color &amp; Tone">
+                    <MenuItem Header="_Auto Tone Enhance" Click="MenuAutoEnhance_Click"/>
+                    <MenuItem Header="_Invert Colors" Click="MenuInvert_Click"/>
+                    <MenuItem Header="_Grayscale Mode" Click="MenuGrayscale_Click"/>
+                    <MenuItem Header="_Sepia Filter" Click="MenuSepia_Click"/>
+                    <Separator Background="#3f3f46"/>
+                    <MenuItem Header="_Reset All Adjustments" Click="MenuResetAdjustments_Click"/>
+                </MenuItem>
+                <MenuItem Header="_Tools">
+                    <MenuItem Header="Split / Side-by-Side _Compare... (C)" Click="MenuCompare_Click"/>
+                    <MenuItem Header="_Batch Convert &amp; Resize..." Click="MenuBatch_Click"/>
+                    <MenuItem Header="Start _Slideshow (Space)" Click="MenuSlideshow_Click"/>
+                    <MenuItem Header="Export All _Animation Frames..." Click="MenuExportFrames_Click"/>
+                </MenuItem>
+                <MenuItem Header="_Help">
+                    <MenuItem Header="_About ViewCraft &amp; Supported Formats" Click="MenuAbout_Click"/>
+                </MenuItem>
+            </Menu>
+
+            <!-- Quick Action Toolbar -->
+            <Border Background="#202023" BorderBrush="#333338" BorderThickness="0,0,0,1" Padding="8,4">
+                <DockPanel>
+                    <!-- Left Toolbar Buttons -->
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <Button Style="{StaticResource ToolButton}" Content="📂 Open" Click="MenuOpenImage_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="📁 Folder" Click="MenuOpenFolder_Click"/>
+                        <Rectangle Width="1" Height="18" Fill="#3f3f46" Margin="6,0"/>
+
+                        <Button Style="{StaticResource ToolButton}" Content="◀ Prev (←)" Click="BtnPrev_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="Next (→) ▶" Click="BtnNext_Click"/>
+                        <Rectangle Width="1" Height="18" Fill="#3f3f46" Margin="6,0"/>
+
+                        <Button Style="{StaticResource ToolButton}" Content="🔍+ Zoom In" Click="MenuZoomIn_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="🔍- Zoom Out" Click="MenuZoomOut_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="⛶ Fit (0)" Click="MenuFit_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="1:1 (1)" Click="MenuActualSize_Click"/>
+                        <Rectangle Width="1" Height="18" Fill="#3f3f46" Margin="6,0"/>
+
+                        <Button Style="{StaticResource ToolButton}" Content="⟳ Rotate" Click="MenuRotateCW_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="⇄ Flip" Click="MenuFlipH_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="⚖ Compare" Click="MenuCompare_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="⚡ Batch" Click="MenuBatch_Click"/>
+                        <Button x:Name="BtnSlideshowToggle" Style="{StaticResource ToolButton}" Content="▶ Slideshow" Click="MenuSlideshow_Click"/>
+                    </StackPanel>
+
+                    <!-- Right Toolbar Controls -->
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                        <TextBlock x:Name="TxtZoomLevel" Text="100%" Foreground="#f59e0b" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                        <Button Style="{StaticResource ToolButton}" Content="🗂 Filmstrip (F)" Click="MenuToggleFilmstrip_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="⚙ Inspector (I)" Click="MenuToggleInspector_Click"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- MAIN VIEWPORT & SIDEBAR (GRID ROW 1) -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition x:Name="ColInspector" Width="360" MaxWidth="500" MinWidth="260"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Center Image Canvas Viewport -->
+            <Grid Grid.Column="0" Background="#111113" ClipToBounds="True">
+                <!-- Scrollable / Pannable Container -->
+                <ScrollViewer x:Name="ScrollViewport" 
+                              HorizontalScrollBarVisibility="Hidden" 
+                              VerticalScrollBarVisibility="Hidden"
+                              Focusable="False"
+                              PreviewMouseWheel="ScrollViewport_PreviewMouseWheel"
+                              MouseDown="ScrollViewport_MouseDown"
+                              MouseMove="ScrollViewport_MouseMove"
+                              MouseUp="ScrollViewport_MouseUp">
+                    
+                    <Grid x:Name="GridCanvasHost" Background="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <!-- Transformed Image -->
+                        <Image x:Name="MainImageDisplay" 
+                               Stretch="None" 
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               MouseMove="MainImageDisplay_MouseMove"
+                               MouseLeave="MainImageDisplay_MouseLeave">
+                            <Image.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="TransformScale" ScaleX="1.0" ScaleY="1.0"/>
+                                    <RotateTransform x:Name="TransformRotate" Angle="0"/>
+                                    <TranslateTransform x:Name="TransformTranslate" X="0" Y="0"/>
+                                </TransformGroup>
+                            </Image.RenderTransform>
+                        </Image>
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- Pixel Grid Overlay (when zoom >= 400%) -->
+                <Canvas x:Name="CanvasPixelGrid" IsHitTestVisible="False" Visibility="Collapsed"/>
+
+                <!-- Pixel Inspector HUD (Bottom Left overlay) -->
+                <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="16" 
+                        Background="#D018181b" BorderBrush="#3f3f46" BorderThickness="1" 
+                        CornerRadius="6" Padding="10,6" IsHitTestVisible="False">
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="BorderColorSwatch" Width="20" Height="20" CornerRadius="3" Background="#000000" BorderBrush="#71717a" BorderThickness="1" Margin="0,0,10,0"/>
+                        <StackPanel>
+                            <TextBlock x:Name="TxtPixelCoord" Text="X: —  Y: —" Foreground="#fafafa" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock x:Name="TxtPixelColor" Text="RGB: —  Hex: —" Foreground="#a1a1aa" FontSize="11"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Floating Mini-Map / Navigator (Top Right overlay) -->
+                <Border x:Name="BorderMiniMap" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" 
+                        Background="#E018181b" BorderBrush="#3f3f46" BorderThickness="1" 
+                        CornerRadius="6" Padding="4" Width="160" Height="120" Visibility="Visible">
+                    <Grid x:Name="GridMiniMap">
+                        <Image x:Name="ImgMiniMap" Stretch="Uniform"/>
+                        <Canvas x:Name="CanvasMiniMapOverlay" ClipToBounds="True">
+                            <Rectangle x:Name="RectMiniMapViewport" Stroke="#f59e0b" StrokeThickness="1.5" Fill="#30f59e0b"/>
+                        </Canvas>
+                    </Grid>
+                </Border>
+
+                <!-- Drag & Drop / Empty State Indicator -->
+                <StackPanel x:Name="PanelEmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Visible">
+                    <TextBlock Text="🖼" FontSize="48" HorizontalAlignment="Center" Foreground="#71717a"/>
+                    <TextBlock Text="Drag and drop any image or folder here" FontSize="18" FontWeight="SemiBold" Foreground="#a1a1aa" HorizontalAlignment="Center" Margin="0,10,0,4"/>
+                    <TextBlock Text="Supports 200+ formats: RAW, PSD, PSB, AVIF, JXL, HEIC, WebP, EXR, HDR, TIFF, SVG, DICOM, FITS, DDS, etc." FontSize="12" Foreground="#71717a" HorizontalAlignment="Center"/>
+                    <Button Content="Open File..." Margin="0,14,0,0" Padding="16,8" Background="#f59e0b" Foreground="#18181b" FontWeight="Bold" BorderThickness="0" HorizontalAlignment="Center" Click="MenuOpenImage_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Splitter between Canvas and Sidebar -->
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="#27272a"/>
+
+            <!-- RIGHT SIDEBAR: Studio Inspector -->
+            <Border x:Name="BorderInspector" Grid.Column="2" Background="#202023" BorderBrush="#333338" BorderThickness="1,0,0,0">
+                <TabControl Background="Transparent" BorderThickness="0">
+                    <!-- TAB 1: File & Camera Metadata -->
+                    <TabItem Header="Metadata">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="14">
+                                <!-- Technical Specs Section -->
+                                <TextBlock Text="TECHNICAL SPECS" FontSize="11" FontWeight="Bold" Foreground="#f59e0b" Margin="0,0,0,8"/>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Format:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaFormat" Grid.Row="0" Grid.Column="1" Text="—" Foreground="#fafafa" FontWeight="SemiBold" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Dimensions:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaDimensions" Grid.Row="1" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Megapixels:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaMegapixels" Grid.Row="2" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="File Size:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaFileSize" Grid.Row="3" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Color Space:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaColorSpace" Grid.Row="4" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Bit Depth:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaBitDepth" Grid.Row="5" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+                                </Grid>
+
+                                <Separator Background="#333338" Margin="0,0,0,12"/>
+
+                                <!-- Camera EXIF Section -->
+                                <TextBlock Text="CAMERA &amp; SHOT (EXIF)" FontSize="11" FontWeight="Bold" Foreground="#f59e0b" Margin="0,0,0,8"/>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Camera:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaCamera" Grid.Row="0" Grid.Column="1" Text="—" Foreground="#fafafa" TextTrimming="CharacterEllipsis" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Lens:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaLens" Grid.Row="1" Grid.Column="1" Text="—" Foreground="#fafafa" TextTrimming="CharacterEllipsis" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Focal Length:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaFocal" Grid.Row="2" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Aperture:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaAperture" Grid.Row="3" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Shutter:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaShutter" Grid.Row="4" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="ISO:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaIso" Grid.Row="5" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Date Taken:" Foreground="#a1a1aa" Margin="0,2"/>
+                                    <TextBlock x:Name="MetaDateTaken" Grid.Row="6" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+                                </Grid>
+
+                                <Separator Background="#333338" Margin="0,0,0,12"/>
+
+                                <!-- Location GPS -->
+                                <TextBlock Text="LOCATION (GPS)" FontSize="11" FontWeight="Bold" Foreground="#f59e0b" Margin="0,0,0,8"/>
+                                <StackPanel Margin="0,0,0,14">
+                                    <TextBlock x:Name="MetaGps" Text="No GPS Data" Foreground="#a1a1aa" Margin="0,0,0,6"/>
+                                    <Button x:Name="BtnOpenMap" Content="🗺 Open in Google Maps" Visibility="Collapsed" Padding="8,4" Background="#27272a" Foreground="#f59e0b" BorderBrush="#3f3f46" Click="BtnOpenMap_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- TAB 2: Color & Tone Adjustments -->
+                    <TabItem Header="Adjustments">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="14">
+                                <DockPanel Margin="0,0,0,12">
+                                    <TextBlock Text="COLOR &amp; TONE LAB" FontSize="11" FontWeight="Bold" Foreground="#f59e0b" VerticalAlignment="Center"/>
+                                    <Button Content="Reset All" HorizontalAlignment="Right" Padding="8,2" Background="#27272a" Foreground="#a1a1aa" BorderBrush="#3f3f46" FontSize="11" Click="MenuResetAdjustments_Click"/>
+                                </DockPanel>
+
+                                <!-- Exposure -->
+                                <DockPanel Margin="0,4,0,2">
+                                    <TextBlock Text="Exposure (EV):" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValExposure" Text="0.0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldExposure" Minimum="-2.0" Maximum="2.0" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <!-- Contrast -->
+                                <DockPanel Margin="0,8,0,2">
+                                    <TextBlock Text="Contrast:" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValContrast" Text="0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldContrast" Minimum="-100" Maximum="100" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <!-- Brightness -->
+                                <DockPanel Margin="0,8,0,2">
+                                    <TextBlock Text="Brightness:" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValBrightness" Text="0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldBrightness" Minimum="-100" Maximum="100" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <!-- Saturation -->
+                                <DockPanel Margin="0,8,0,2">
+                                    <TextBlock Text="Saturation:" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValSaturation" Text="0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldSaturation" Minimum="-100" Maximum="100" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <!-- Vibrance -->
+                                <DockPanel Margin="0,8,0,2">
+                                    <TextBlock Text="Vibrance:" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValVibrance" Text="0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldVibrance" Minimum="-100" Maximum="100" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <!-- Temperature -->
+                                <DockPanel Margin="0,8,0,2">
+                                    <TextBlock Text="Temperature (Cool ↔ Warm):" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValTemperature" Text="0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldTemperature" Minimum="-100" Maximum="100" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <!-- Tint -->
+                                <DockPanel Margin="0,8,0,2">
+                                    <TextBlock Text="Tint (Green ↔ Magenta):" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValTint" Text="0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldTint" Minimum="-100" Maximum="100" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <!-- Highlights -->
+                                <DockPanel Margin="0,8,0,2">
+                                    <TextBlock Text="Highlights:" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValHighlights" Text="0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldHighlights" Minimum="-100" Maximum="100" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <!-- Shadows -->
+                                <DockPanel Margin="0,8,0,2">
+                                    <TextBlock Text="Shadows:" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValShadows" Text="0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldShadows" Minimum="-100" Maximum="100" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <!-- Sharpness -->
+                                <DockPanel Margin="0,8,0,2">
+                                    <TextBlock Text="Sharpness:" Foreground="#d4d4d8" FontSize="12"/>
+                                    <TextBlock x:Name="ValSharpness" Text="0" Foreground="#f59e0b" HorizontalAlignment="Right" FontSize="12"/>
+                                </DockPanel>
+                                <Slider x:Name="SldSharpness" Minimum="0" Maximum="100" Value="0" ValueChanged="AdjustmentSlider_ValueChanged"/>
+
+                                <Separator Background="#333338" Margin="0,14,0,10"/>
+
+                                <!-- Filter Presets -->
+                                <TextBlock Text="EFFECTS &amp; CHANNELS" FontSize="11" FontWeight="Bold" Foreground="#f59e0b" Margin="0,0,0,8"/>
+                                <WrapPanel Margin="0,0,0,10">
+                                    <CheckBox x:Name="ChkInvert" Content="Invert" Foreground="#fafafa" Margin="0,0,12,6" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
+                                    <CheckBox x:Name="ChkGrayscale" Content="Grayscale" Foreground="#fafafa" Margin="0,0,12,6" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
+                                    <CheckBox x:Name="ChkSepia" Content="Sepia" Foreground="#fafafa" Margin="0,0,12,6" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
+                                </WrapPanel>
+
+                                <!-- Channel Isolation -->
+                                <TextBlock Text="Isolate Channel:" Foreground="#a1a1aa" FontSize="12" Margin="0,0,0,6"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Content="RGB" Padding="6,4" Background="#27272a" Foreground="#fafafa" BorderBrush="#3f3f46" Margin="0,0,4,0" Click="BtnChannelRGB_Click"/>
+                                    <Button Grid.Column="1" Content="Red" Padding="6,4" Background="#27272a" Foreground="#ef4444" BorderBrush="#3f3f46" Margin="2,0" Click="BtnChannelRed_Click"/>
+                                    <Button Grid.Column="2" Content="Green" Padding="6,4" Background="#27272a" Foreground="#22c55e" BorderBrush="#3f3f46" Margin="2,0" Click="BtnChannelGreen_Click"/>
+                                    <Button Grid.Column="3" Content="Blue" Padding="6,4" Background="#27272a" Foreground="#3b82f6" BorderBrush="#3f3f46" Margin="4,0,0,0" Click="BtnChannelBlue_Click"/>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- TAB 3: Real-Time Histogram -->
+                    <TabItem Header="Histogram">
+                        <StackPanel Margin="14">
+                            <TextBlock Text="LIVE RGB &amp; LUMA HISTOGRAM" FontSize="11" FontWeight="Bold" Foreground="#f59e0b" Margin="0,0,0,10"/>
+                            
+                            <!-- Histogram Graph Control -->
+                            <controls:HistogramControl x:Name="HistogramGraph" Height="160" Margin="0,0,0,12"/>
+
+                            <!-- Channel Checkboxes -->
+                            <WrapPanel Margin="0,0,0,14">
+                                <CheckBox x:Name="ChkHistoLuma" Content="Luminance" IsChecked="True" Foreground="#e4e4e7" Margin="0,0,12,6" Checked="HistoCheck_Changed" Unchecked="HistoCheck_Changed"/>
+                                <CheckBox x:Name="ChkHistoRed" Content="Red" IsChecked="True" Foreground="#ef4444" Margin="0,0,12,6" Checked="HistoCheck_Changed" Unchecked="HistoCheck_Changed"/>
+                                <CheckBox x:Name="ChkHistoGreen" Content="Green" IsChecked="True" Foreground="#22c55e" Margin="0,0,12,6" Checked="HistoCheck_Changed" Unchecked="HistoCheck_Changed"/>
+                                <CheckBox x:Name="ChkHistoBlue" Content="Blue" IsChecked="True" Foreground="#3b82f6" Margin="0,0,12,6" Checked="HistoCheck_Changed" Unchecked="HistoCheck_Changed"/>
+                            </WrapPanel>
+
+                            <Separator Background="#333338" Margin="0,0,0,12"/>
+
+                            <!-- Statistics -->
+                            <TextBlock Text="HISTOGRAM STATISTICS" FontSize="11" FontWeight="Bold" Foreground="#f59e0b" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Mean Luma:" Foreground="#a1a1aa" Margin="0,2"/>
+                                <TextBlock x:Name="HistoMean" Grid.Row="0" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Max Bin Count:" Foreground="#a1a1aa" Margin="0,2"/>
+                                <TextBlock x:Name="HistoMaxCount" Grid.Row="1" Grid.Column="1" Text="—" Foreground="#fafafa" Margin="0,2"/>
+                            </Grid>
+                        </StackPanel>
+                    </TabItem>
+                </TabControl>
+            </Border>
+        </Grid>
+
+        <!-- MULTI-FRAME / ANIMATION TIMELINE (GRID ROW 2) -->
+        <Border x:Name="BorderAnimationTimeline" Grid.Row="2" Background="#202023" BorderBrush="#333338" BorderThickness="0,1,0,0" Padding="12,6" Visibility="Collapsed">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Button x:Name="BtnAnimPlayPause" Content="▶ Play" Padding="10,4" Background="#27272a" Foreground="#fafafa" BorderBrush="#3f3f46" Margin="0,0,6,0" Click="BtnAnimPlayPause_Click"/>
+                    <Button Content="⏮ Prev Frame" Padding="8,4" Background="#27272a" Foreground="#fafafa" BorderBrush="#3f3f46" Margin="0,0,4,0" Click="BtnAnimPrevFrame_Click"/>
+                    <Button Content="Next Frame ⏭" Padding="8,4" Background="#27272a" Foreground="#fafafa" BorderBrush="#3f3f46" Margin="0,0,10,0" Click="BtnAnimNextFrame_Click"/>
+                    <TextBlock x:Name="TxtAnimFrameCount" Text="Frame 1 of 1" Foreground="#f59e0b" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,16,0"/>
+                </StackPanel>
+
+                <Button Content="Export Frames" DockPanel.Dock="Right" Padding="8,4" Background="#27272a" Foreground="#fafafa" BorderBrush="#3f3f46" HorizontalAlignment="Right" Click="MenuExportFrames_Click"/>
+
+                <!-- Timeline Scrubber Slider -->
+                <Slider x:Name="SldAnimTimeline" Minimum="0" Maximum="1" Value="0" VerticalAlignment="Center" Margin="10,0" ValueChanged="SldAnimTimeline_ValueChanged"/>
+            </DockPanel>
+        </Border>
+
+        <!-- BOTTOM FILMSTRIP CAROUSEL (GRID ROW 3) -->
+        <Border x:Name="BorderFilmstrip" Grid.Row="3" Background="#18181b" BorderBrush="#333338" BorderThickness="0,1,0,0" Height="96" Visibility="Visible">
+            <ListBox x:Name="ListFilmstrip" 
+                     Background="Transparent" 
+                     BorderThickness="0" 
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto" 
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     SelectionChanged="ListFilmstrip_SelectionChanged">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="80" Height="80" Margin="4,2" CornerRadius="4" Background="#242427" BorderBrush="#3f3f46" BorderThickness="1">
+                            <Grid>
+                                <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border VerticalAlignment="Bottom" Background="#CC18181b" Padding="2">
+                                    <TextBlock Text="{Binding FileName}" Foreground="#d4d4d8" FontSize="10" TextTrimming="CharacterEllipsis" HorizontalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- STATUS BAR (GRID ROW 4) -->
+        <Border Grid.Row="4" Background="#141416" BorderBrush="#2a2a2d" BorderThickness="0,1,0,0" Padding="12,4">
+            <DockPanel>
+                <TextBlock x:Name="StatusIndex" Text="No images loaded" Foreground="#a1a1aa" FontSize="11" Margin="0,0,16,0"/>
+                <TextBlock x:Name="StatusDimensions" Text="—" Foreground="#d4d4d8" FontSize="11" Margin="0,0,16,0"/>
+                <TextBlock x:Name="StatusFileSize" Text="—" Foreground="#d4d4d8" FontSize="11" Margin="0,0,16,0"/>
+                <TextBlock x:Name="StatusFormat" Text="—" Foreground="#f59e0b" FontSize="11" Margin="0,0,16,0"/>
+                <TextBlock x:Name="StatusCursorInfo" Text="" Foreground="#a1a1aa" FontSize="11" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
