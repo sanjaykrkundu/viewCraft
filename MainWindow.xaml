@@ -10,6 +10,7 @@
         KeyDown="Window_KeyDown">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <!-- Dark Studio Theme Styles -->
         <SolidColorBrush x:Key="BgDark" Color="#18181b"/>
         <SolidColorBrush x:Key="BgPanel" Color="#242427"/>
@@ -504,31 +505,87 @@
         </Border>
 
         <!-- BOTTOM FILMSTRIP CAROUSEL (GRID ROW 3) -->
-        <Border x:Name="BorderFilmstrip" Grid.Row="3" Background="#18181b" BorderBrush="#333338" BorderThickness="0,1,0,0" Height="96" Visibility="Visible">
-            <ListBox x:Name="ListFilmstrip" 
-                     Background="Transparent" 
-                     BorderThickness="0" 
-                     ScrollViewer.HorizontalScrollBarVisibility="Auto" 
-                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                     SelectionChanged="ListFilmstrip_SelectionChanged">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Border Width="80" Height="80" Margin="4,2" CornerRadius="4" Background="#242427" BorderBrush="#3f3f46" BorderThickness="1">
-                            <Grid>
-                                <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <Border VerticalAlignment="Bottom" Background="#CC18181b" Padding="2">
-                                    <TextBlock Text="{Binding FileName}" Foreground="#d4d4d8" FontSize="10" TextTrimming="CharacterEllipsis" HorizontalAlignment="Center"/>
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+        <Border x:Name="BorderFilmstrip" Grid.Row="3" Background="#18181b" BorderBrush="#333338" BorderThickness="0,1,0,0" Height="128" Visibility="Visible">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- DAM Filter & Rating Quick Bar -->
+                <Border Grid.Row="0" Background="#202023" BorderBrush="#2a2a2d" BorderThickness="0,0,0,1" Padding="8,4">
+                    <DockPanel>
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                            <TextBlock Text="Filter:" Foreground="#a1a1aa" VerticalAlignment="Center" FontSize="11" Margin="0,0,6,0"/>
+                            <ComboBox x:Name="CmbFilmstripFilter" SelectedIndex="0" FontSize="11" Padding="4,2" SelectionChanged="CmbFilmstripFilter_SelectionChanged">
+                                <ComboBoxItem Content="All Images"/>
+                                <ComboBoxItem Content="★ Rated (1–5)"/>
+                                <ComboBoxItem Content="★★★ (3+ Stars)"/>
+                                <ComboBoxItem Content="★★★★★ (5 Stars)"/>
+                                <ComboBoxItem Content="🔴 Red Label"/>
+                                <ComboBoxItem Content="🟡 Yellow Label"/>
+                                <ComboBoxItem Content="🟢 Green Label"/>
+                                <ComboBoxItem Content="🔵 Blue Label"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Active Image Quick Rating & Color Labels -->
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                            <TextBlock Text="Rate:" Foreground="#a1a1aa" VerticalAlignment="Center" FontSize="11" Margin="0,0,6,0"/>
+                            <Button Style="{StaticResource ToolButton}" Content="☆0" Padding="4,2" Click="BtnSetRating0_Click"/>
+                            <Button Style="{StaticResource ToolButton}" Content="★1" Padding="4,2" Foreground="#f59e0b" Click="BtnSetRating1_Click"/>
+                            <Button Style="{StaticResource ToolButton}" Content="★2" Padding="4,2" Foreground="#f59e0b" Click="BtnSetRating2_Click"/>
+                            <Button Style="{StaticResource ToolButton}" Content="★3" Padding="4,2" Foreground="#f59e0b" Click="BtnSetRating3_Click"/>
+                            <Button Style="{StaticResource ToolButton}" Content="★4" Padding="4,2" Foreground="#f59e0b" Click="BtnSetRating4_Click"/>
+                            <Button Style="{StaticResource ToolButton}" Content="★5" Padding="4,2" Foreground="#f59e0b" Click="BtnSetRating5_Click"/>
+                            <Rectangle Width="1" Height="14" Fill="#3f3f46" Margin="6,0"/>
+
+                            <Button Style="{StaticResource ToolButton}" Content="🔴" Padding="2" Click="BtnSetLabelRed_Click"/>
+                            <Button Style="{StaticResource ToolButton}" Content="🟡" Padding="2" Click="BtnSetLabelYellow_Click"/>
+                            <Button Style="{StaticResource ToolButton}" Content="🟢" Padding="2" Click="BtnSetLabelGreen_Click"/>
+                            <Button Style="{StaticResource ToolButton}" Content="🔵" Padding="2" Click="BtnSetLabelBlue_Click"/>
+                            <Button Style="{StaticResource ToolButton}" Content="✕" Padding="4,2" Click="BtnSetLabelNone_Click"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- Thumbnails List -->
+                <ListBox x:Name="ListFilmstrip" 
+                         Grid.Row="1"
+                         Background="Transparent" 
+                         BorderThickness="0" 
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto" 
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         SelectionChanged="ListFilmstrip_SelectionChanged">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Width="80" Height="80" Margin="4,2" CornerRadius="4" Background="#242427" BorderBrush="#3f3f46" BorderThickness="1">
+                                <Grid>
+                                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                                    <!-- Top Rating Stars -->
+                                    <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="2" Background="#90000000" CornerRadius="2" Padding="2,0" Visibility="{Binding HasRating, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="{Binding RatingStars}" Foreground="#f59e0b" FontSize="9" FontWeight="Bold"/>
+                                    </Border>
+
+                                    <!-- Top Color Label Badge -->
+                                    <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="3" Width="8" Height="8" CornerRadius="4" Background="{Binding ColorLabelHex}" Visibility="{Binding HasColorLabel, Converter={StaticResource BoolToVis}}"/>
+
+                                    <!-- Bottom File Name -->
+                                    <Border VerticalAlignment="Bottom" Background="#CC18181b" Padding="2">
+                                        <TextBlock Text="{Binding FileName}" Foreground="#d4d4d8" FontSize="10" TextTrimming="CharacterEllipsis" HorizontalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
         </Border>
 
         <!-- STATUS BAR (GRID ROW 4) -->

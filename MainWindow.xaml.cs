@@ -141,7 +141,7 @@ namespace ViewCraft
             LoadDirectory(dir, selectedFilePath);
         }
 
-        private void LoadDirectory(string directoryPath, string? selectedFilePath = null)
+        private async void LoadDirectory(string directoryPath, string? selectedFilePath = null)
         {
             try
             {
@@ -153,10 +153,20 @@ namespace ViewCraft
                 _imageItems.Clear();
                 int selectIdx = 0;
 
+                // Load catalog sidecar if present
+                var catalog = await SidecarEngine.LoadCatalogAsync(directoryPath);
+
                 for (int i = 0; i < files.Count; i++)
                 {
                     string f = files[i];
                     var item = new ImageItem { FilePath = f };
+
+                    if (catalog.TryGetValue(item.FileName, out var entry))
+                    {
+                        item.Rating = entry.Rating;
+                        item.ColorLabel = entry.ColorLabel;
+                    }
+
                     _imageItems.Add(item);
 
                     if (selectedFilePath != null && string.Equals(f, selectedFilePath, StringComparison.OrdinalIgnoreCase))
@@ -1068,6 +1078,23 @@ namespace ViewCraft
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                switch (e.Key)
+                {
+                    case Key.D0 or Key.NumPad0: SetRating(0); e.Handled = true; return;
+                    case Key.D1 or Key.NumPad1: SetRating(1); e.Handled = true; return;
+                    case Key.D2 or Key.NumPad2: SetRating(2); e.Handled = true; return;
+                    case Key.D3 or Key.NumPad3: SetRating(3); e.Handled = true; return;
+                    case Key.D4 or Key.NumPad4: SetRating(4); e.Handled = true; return;
+                    case Key.D5 or Key.NumPad5: SetRating(5); e.Handled = true; return;
+                    case Key.D6 or Key.NumPad6: SetColorLabel("Red"); e.Handled = true; return;
+                    case Key.D7 or Key.NumPad7: SetColorLabel("Yellow"); e.Handled = true; return;
+                    case Key.D8 or Key.NumPad8: SetColorLabel("Green"); e.Handled = true; return;
+                    case Key.D9 or Key.NumPad9: SetColorLabel("Blue"); e.Handled = true; return;
+                }
+            }
+
             switch (e.Key)
             {
                 case Key.Left or Key.PageUp:
@@ -1147,6 +1174,93 @@ namespace ViewCraft
                     else
                         MenuSlideshow_Click(this, new RoutedEventArgs());
                     e.Handled = true;
+                    break;
+            }
+        }
+
+        #endregion
+
+        #region DAM Asset Ratings & Color Labels
+
+        private void SetRating(int rating)
+        {
+            if (_currentIndex < 0 || _currentIndex >= _imageItems.Count) return;
+            _imageItems[_currentIndex].Rating = rating;
+            SaveCatalogForCurrentDirectory();
+        }
+
+        private void SetColorLabel(string label)
+        {
+            if (_currentIndex < 0 || _currentIndex >= _imageItems.Count) return;
+            _imageItems[_currentIndex].ColorLabel = label;
+            SaveCatalogForCurrentDirectory();
+        }
+
+        private void BtnSetRating0_Click(object sender, RoutedEventArgs e) => SetRating(0);
+        private void BtnSetRating1_Click(object sender, RoutedEventArgs e) => SetRating(1);
+        private void BtnSetRating2_Click(object sender, RoutedEventArgs e) => SetRating(2);
+        private void BtnSetRating3_Click(object sender, RoutedEventArgs e) => SetRating(3);
+        private void BtnSetRating4_Click(object sender, RoutedEventArgs e) => SetRating(4);
+        private void BtnSetRating5_Click(object sender, RoutedEventArgs e) => SetRating(5);
+
+        private void BtnSetLabelRed_Click(object sender, RoutedEventArgs e) => SetColorLabel("Red");
+        private void BtnSetLabelYellow_Click(object sender, RoutedEventArgs e) => SetColorLabel("Yellow");
+        private void BtnSetLabelGreen_Click(object sender, RoutedEventArgs e) => SetColorLabel("Green");
+        private void BtnSetLabelBlue_Click(object sender, RoutedEventArgs e) => SetColorLabel("Blue");
+        private void BtnSetLabelNone_Click(object sender, RoutedEventArgs e) => SetColorLabel("None");
+
+        private void SaveCatalogForCurrentDirectory()
+        {
+            if (_imageItems.Count == 0) return;
+            string dir = _imageItems[0].DirectoryPath;
+            if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return;
+
+            var entries = new Dictionary<string, ImageCatalogEntry>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in _imageItems)
+            {
+                if (item.Rating > 0 || (item.ColorLabel != "None" && !string.IsNullOrEmpty(item.ColorLabel)))
+                {
+                    entries[item.FileName] = new ImageCatalogEntry
+                    {
+                        Rating = item.Rating,
+                        ColorLabel = item.ColorLabel
+                    };
+                }
+            }
+
+            _ = SidecarEngine.SaveCatalogAsync(dir, entries);
+        }
+
+        private void CmbFilmstripFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ListFilmstrip == null) return;
+            int idx = CmbFilmstripFilter.SelectedIndex;
+
+            switch (idx)
+            {
+                case 1: // Rated (1-5)
+                    ListFilmstrip.ItemsSource = _imageItems.Where(x => x.Rating > 0).ToList();
+                    break;
+                case 2: // 3+ Stars
+                    ListFilmstrip.ItemsSource = _imageItems.Where(x => x.Rating >= 3).ToList();
+                    break;
+                case 3: // 5 Stars
+                    ListFilmstrip.ItemsSource = _imageItems.Where(x => x.Rating == 5).ToList();
+                    break;
+                case 4: // Red
+                    ListFilmstrip.ItemsSource = _imageItems.Where(x => x.ColorLabel == "Red").ToList();
+                    break;
+                case 5: // Yellow
+                    ListFilmstrip.ItemsSource = _imageItems.Where(x => x.ColorLabel == "Yellow").ToList();
+                    break;
+                case 6: // Green
+                    ListFilmstrip.ItemsSource = _imageItems.Where(x => x.ColorLabel == "Green").ToList();
+                    break;
+                case 7: // Blue
+                    ListFilmstrip.ItemsSource = _imageItems.Where(x => x.ColorLabel == "Blue").ToList();
+                    break;
+                default:
+                    ListFilmstrip.ItemsSource = _imageItems;
                     break;
             }
         }
