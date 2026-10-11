@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#18181b"/>
+  <circle cx="400" cy="300" r="180" fill="#f59e0b"/>
+  <text x="400" y="310" font-size="32" font-family="Arial" fill="#18181b" text-anchor="middle" font-weight="bold">ViewCraft Vector SVG</text>
+</svg>
