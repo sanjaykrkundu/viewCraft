@@ -38,10 +38,13 @@ namespace ViewCraft.Engine
             ".tif", ".tiff", ".btf", // BigTIFF
             // Next-Gen & HDR
             ".avif", ".heic", ".heif", ".jxl", ".exr", ".hdr", ".rgbe",
-            // Camera RAW & MIPI CSI-2 Sensor Dumps
+            // Camera RAW & MIPI CSI-2 / Qualcomm Spectra / Samsung Exynos Sensor Dumps
             ".dng", ".cr2", ".cr3", ".nef", ".nrw", ".arw", ".srf", ".sr2", ".raf", ".orf", ".rw2", ".pef", 
             ".ptx", ".x3f", ".3fr", ".erf", ".mef", ".mos", ".mrw", ".srw", ".kdc", ".dcr",
-            ".raw", ".mipi", ".bayer", ".nvraw",
+            ".raw", ".mipi", ".bayer", ".nvraw", ".qraw", ".sraw",
+            // YUV Video & Camera Frame Dumps (Qualcomm CamX / Exynos / Android / V4L2)
+            ".yuv", ".nv12", ".nv21", ".i420", ".yv12", ".nv16", ".nv61",
+            ".yuyv", ".yuy2", ".uyvy", ".yvyu", ".vyuy", ".p010", ".tp10",
             // Adobe & Vector
             ".psd", ".psb", ".ai", ".eps", ".svg", ".svgz", ".pdf",
             // Medical & Scientific
@@ -54,6 +57,29 @@ namespace ViewCraft.Engine
             ".qoi", ".cin", ".dpx", ".miff"
         };
 
+        private static readonly HashSet<string> MipiRawExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".raw", ".mipi", ".bayer", ".nvraw", ".qraw", ".sraw"
+        };
+
+        private static readonly HashSet<string> YuvExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".yuv", ".nv12", ".nv21", ".i420", ".yv12", ".nv16", ".nv61",
+            ".yuyv", ".yuy2", ".uyvy", ".yvyu", ".vyuy", ".p010", ".tp10"
+        };
+
+        public static bool IsMipiOrSensorRaw(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return false;
+            return MipiRawExtensions.Contains(Path.GetExtension(filePath));
+        }
+
+        public static bool IsYuvFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return false;
+            return YuvExtensions.Contains(Path.GetExtension(filePath));
+        }
+
         public static bool IsSupportedFile(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath)) return false;
@@ -63,11 +89,12 @@ namespace ViewCraft.Engine
 
         public static string GetFileFilter()
         {
-            return "All Supported Images|*.jpg;*.jpeg;*.png;*.webp;*.avif;*.jxl;*.heic;*.heif;*.gif;*.bmp;*.tiff;*.tif;*.psd;*.psb;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.orf;*.rw2;*.exr;*.hdr;*.svg;*.dcm;*.fits;*.dds;*.tga;*.pcx;*.ico;*.pdf;*.eps;*.raw;*.mipi;*.bayer;*.nvraw|" +
+            return "All Supported Formats|*.jpg;*.jpeg;*.png;*.webp;*.avif;*.jxl;*.heic;*.heif;*.gif;*.bmp;*.tiff;*.tif;*.psd;*.psb;*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.orf;*.rw2;*.exr;*.hdr;*.svg;*.dcm;*.fits;*.dds;*.tga;*.pcx;*.ico;*.pdf;*.eps;*.raw;*.mipi;*.bayer;*.nvraw;*.qraw;*.sraw;*.yuv;*.nv12;*.nv21;*.i420;*.yv12;*.yuyv;*.yuy2;*.uyvy;*.p010;*.tp10|" +
                    "Standard Web Images (*.jpg;*.png;*.webp;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.webp;*.gif;*.bmp|" +
                    "Next-Gen Formats (*.avif;*.jxl;*.heic;*.heif;*.exr;*.hdr)|*.avif;*.jxl;*.heic;*.heif;*.exr;*.hdr|" +
-                   "Camera RAW & MIPI Dumps (*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.raw;*.mipi;*.bayer)|*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.orf;*.rw2;*.raw;*.mipi;*.bayer;*.nvraw|" +
-                   "MIPI CSI-2 Sensor RAW (*.raw;*.mipi;*.bayer;*.nvraw)|*.raw;*.mipi;*.bayer;*.nvraw|" +
+                   "YUV / Video & ISP Dumps (*.yuv;*.nv12;*.nv21;*.i420;*.yv12;*.yuyv;*.p010;*.tp10)|*.yuv;*.nv12;*.nv21;*.i420;*.yv12;*.nv16;*.nv61;*.yuyv;*.yuy2;*.uyvy;*.p010;*.tp10|" +
+                   "MIPI RAW & Sensor Dumps (*.raw;*.mipi;*.bayer;*.nvraw;*.qraw;*.sraw)|*.raw;*.mipi;*.bayer;*.nvraw;*.qraw;*.sraw|" +
+                   "Camera RAW DNG/CR3/NEF/ARW (*.dng;*.cr2;*.cr3;*.nef;*.arw)|*.dng;*.cr2;*.cr3;*.nef;*.arw;*.raf;*.orf;*.rw2|" +
                    "Adobe Photoshop (*.psd;*.psb;*.ai;*.eps)|*.psd;*.psb;*.ai;*.eps|" +
                    "Textures & Game Assets (*.dds;*.tga;*.ktx)|*.dds;*.tga;*.ktx|" +
                    "Medical & Scientific (*.dcm;*.fits)|*.dcm;*.dicom;*.fits;*.fit|" +

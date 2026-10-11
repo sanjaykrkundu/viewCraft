@@ -94,6 +94,8 @@ namespace ViewCraft.Views
 
             if (!int.TryParse(TxtWidth.Text, out int w) || w <= 0) return;
             if (!int.TryParse(TxtHeight.Text, out int h) || h <= 0) return;
+            int.TryParse(TxtStride?.Text, out int stride);
+            int.TryParse(TxtHeaderOffset?.Text, out int headerOffset);
 
             var p = new MipiRawParameters
             {
@@ -103,7 +105,9 @@ namespace ViewCraft.Views
                 Pattern = (BayerPattern)CmbPattern.SelectedIndex,
                 BlackLevel = (int)SldBlackLevel.Value,
                 RedGain = SldRedGain.Value,
-                BlueGain = SldBlueGain.Value
+                BlueGain = SldBlueGain.Value,
+                RowStride = stride,
+                HeaderOffset = headerOffset
             };
 
             try
@@ -137,6 +141,9 @@ namespace ViewCraft.Views
                 return;
             }
 
+            int.TryParse(TxtStride?.Text, out int stride);
+            int.TryParse(TxtHeaderOffset?.Text, out int headerOffset);
+
             ResultParameters = new MipiRawParameters
             {
                 Width = w,
@@ -145,7 +152,9 @@ namespace ViewCraft.Views
                 Pattern = (BayerPattern)CmbPattern.SelectedIndex,
                 BlackLevel = (int)SldBlackLevel.Value,
                 RedGain = SldRedGain.Value,
-                BlueGain = SldBlueGain.Value
+                BlueGain = SldBlueGain.Value,
+                RowStride = stride,
+                HeaderOffset = headerOffset
             };
 
             DialogResult = true;

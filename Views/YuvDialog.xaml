@@ -1,0 +1,169 @@
+<Window x:Class="ViewCraft.Views.YuvDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Open YUV / Video &amp; ISP Dump — ViewCraft" 
+        Height="680" Width="920"
+        WindowStartupLocation="CenterOwner"
+        Background="#18181b" Foreground="#f4f4f5"
+        ResizeMode="NoResize">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#d4d4d8"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#27272a"/>
+            <Setter Property="Foreground" Value="#fafafa"/>
+            <Setter Property="BorderBrush" Value="#3f3f46"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#27272a"/>
+            <Setter Property="Foreground" Value="#18181b"/>
+            <Setter Property="BorderBrush" Value="#3f3f46"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#27272a"/>
+            <Setter Property="Foreground" Value="#fafafa"/>
+            <Setter Property="BorderBrush" Value="#3f3f46"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,14">
+            <TextBlock Text="Universal YUV / Video Frame &amp; ISP Dump Importer" FontSize="19" FontWeight="Bold" Foreground="#38bdf8"/>
+            <TextBlock x:Name="TxtFileInfo" Text="File: — | Size: —" Foreground="#a1a1aa" Margin="0,3,0,0"/>
+        </StackPanel>
+
+        <!-- Main Form & Live Preview Grid -->
+        <Grid Grid.Row="1" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="420"/>
+                <ColumnDefinition Width="18"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Controls (Scrollable) -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,0,10,0">
+                    <!-- Auto-Detected Resolution -->
+                    <TextBlock Text="Auto-Detected Geometry &amp; Standard Resolutions:" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="CmbPresetResolution" Margin="0,0,0,10" SelectionChanged="CmbPresetResolution_SelectionChanged"/>
+
+                    <!-- Custom Width & Height -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                            <TextBlock Text="Width (px):" Margin="0,0,0,3"/>
+                            <TextBox x:Name="TxtWidth" Text="1920" TextChanged="Params_Changed"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                            <TextBlock Text="Height (px):" Margin="0,0,0,3"/>
+                            <TextBox x:Name="TxtHeight" Text="1080" TextChanged="Params_Changed"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Pixel Format -->
+                    <TextBlock Text="YUV Pixel Format:" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="CmbFormat" SelectedIndex="0" Margin="0,0,0,10" SelectionChanged="Params_Changed">
+                        <!-- Semi-Planar -->
+                        <ComboBoxItem Content="NV12 (Android / Qualcomm / Exynos 4:2:0 Semi-Planar)"/>
+                        <ComboBoxItem Content="NV21 (Android Camera Preview VU 4:2:0)"/>
+                        <ComboBoxItem Content="NV16 (4:2:2 Semi-Planar UV)"/>
+                        <ComboBoxItem Content="NV61 (4:2:2 Semi-Planar VU)"/>
+                        <!-- Planar -->
+                        <ComboBoxItem Content="I420 / YUV420P (Planar 4:2:0 Y+U+V)"/>
+                        <ComboBoxItem Content="YV12 (Planar 4:2:0 Y+V+U)"/>
+                        <ComboBoxItem Content="I422 (Planar 4:2:2)"/>
+                        <ComboBoxItem Content="I444 / YUV444P (Planar 4:4:4)"/>
+                        <!-- Packed -->
+                        <ComboBoxItem Content="YUYV / YUY2 (Packed 4:2:2 Webcam / V4L2)"/>
+                        <ComboBoxItem Content="UYVY (Packed 4:2:2 U-first)"/>
+                        <ComboBoxItem Content="YVYU (Packed 4:2:2)"/>
+                        <ComboBoxItem Content="VYUY (Packed 4:2:2)"/>
+                        <!-- 10-bit HDR -->
+                        <ComboBoxItem Content="P010 (10-bit HDR 4:2:0 LSB Aligned)"/>
+                        <ComboBoxItem Content="P010 (10-bit HDR 4:2:0 MSB Aligned)"/>
+                        <ComboBoxItem Content="TP10 (Qualcomm Snapdragon 10-bit Packed CamX/Spectra)"/>
+                    </ComboBox>
+
+                    <!-- Hardware Stride Preset -->
+                    <TextBlock Text="Hardware Stride &amp; Alignment:" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="CmbStridePreset" SelectedIndex="0" Margin="0,0,0,10" SelectionChanged="CmbStridePreset_SelectionChanged">
+                        <ComboBoxItem Content="Linear / Tight (Stride = Width)"/>
+                        <ComboBoxItem Content="Qualcomm CamX: 64-byte Align (Stride=ALIGN(W,64), H=ALIGN(H,32))"/>
+                        <ComboBoxItem Content="Qualcomm Spectra: 128-byte Align (Stride=ALIGN(W,128), H=ALIGN(H,32))"/>
+                        <ComboBoxItem Content="Samsung Exynos: 16-byte Align (Stride=ALIGN(W,16), H=ALIGN(H,16))"/>
+                        <ComboBoxItem Content="Samsung Exynos: 64-byte Align (Stride=ALIGN(W,64), H=ALIGN(H,32))"/>
+                        <ComboBoxItem Content="Custom Stride"/>
+                    </ComboBox>
+
+                    <!-- Custom Stride & Header Offset -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                            <TextBlock Text="Custom Stride (bytes):" Margin="0,0,0,3"/>
+                            <TextBox x:Name="TxtCustomStride" Text="0" IsReadOnly="True" TextChanged="Params_Changed"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                            <TextBlock Text="Header Offset (bytes):" Margin="0,0,0,3"/>
+                            <TextBox x:Name="TxtHeaderOffset" Text="0" TextChanged="Params_Changed"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Color Matrix -->
+                    <TextBlock Text="Color Space / Matrix:" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="CmbColorSpace" SelectedIndex="1" Margin="0,0,0,10" SelectionChanged="Params_Changed">
+                        <ComboBoxItem Content="BT.601 (SDTV / Legacy / Camera1 Preview)"/>
+                        <ComboBoxItem Content="BT.709 (HDTV / 1080p Standard)"/>
+                        <ComboBoxItem Content="BT.2020 (UHD / 4K / 8K HDR Wide Gamut)"/>
+                    </ComboBox>
+
+                    <!-- Quantization Range -->
+                    <TextBlock Text="Quantization Range:" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="CmbRange" SelectedIndex="0" Margin="0,0,0,10" SelectionChanged="Params_Changed">
+                        <ComboBoxItem Content="Full Range [0..255] (PC / JPEG / Camera ISP Raw)"/>
+                        <ComboBoxItem Content="Limited / Studio Range [16..235] (Broadcast Video)"/>
+                    </ComboBox>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Right Live Preview -->
+            <Border Grid.Column="2" Background="#111113" BorderBrush="#3f3f46" BorderThickness="1" CornerRadius="6" ClipToBounds="True">
+                <Grid>
+                    <Image x:Name="ImgLivePreview" Stretch="Uniform"/>
+                    <Border VerticalAlignment="Bottom" Background="#D018181b" Padding="8,5">
+                        <TextBlock x:Name="TxtPreviewStatus" Text="Live YUV Preview" Foreground="#a1a1aa" FontSize="11" HorizontalAlignment="Center"/>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel" Margin="0,0,10,0" Click="BtnCancel_Click"/>
+            <Button Content="Open in ViewCraft" Background="#0284c7" Foreground="#fafafa" FontWeight="Bold" BorderThickness="0" Click="BtnOpen_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

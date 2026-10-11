@@ -147,6 +147,103 @@ namespace ViewCraft
             }
         }
 
+        private void MenuOpenYuv_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog
+            {
+                Title = "Open YUV / Video & ISP Dump — ViewCraft",
+                Filter = "YUV Video & Camera Frame Dumps (*.yuv;*.nv12;*.nv21;*.i420;*.yv12;*.yuyv;*.p010;*.tp10)|*.yuv;*.nv12;*.nv21;*.i420;*.yv12;*.nv16;*.nv61;*.yuyv;*.yuy2;*.uyvy;*.yvyu;*.vyuy;*.p010;*.tp10|All Files (*.*)|*.*"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                OpenYuvFile(dlg.FileName);
+            }
+        }
+
+        private async void OpenYuvFile(string filePath)
+        {
+            var yuvDlg = new YuvDialog(filePath) { Owner = this };
+            if (yuvDlg.ShowDialog() == true)
+            {
+                try
+                {
+                    var p = yuvDlg.ResultParameters;
+                    var (bmp, masterImg) = await YuvEngine.DecodeYuvAsync(filePath, p);
+
+                    int bitDepth = (p.Format == YuvPixelFormat.P010_LSB || p.Format == YuvPixelFormat.P010_MSB || p.Format == YuvPixelFormat.TP10) ? 10 : 8;
+
+                    _currentDecoded = new DecodedImageResult
+                    {
+                        Width = p.Width,
+                        Height = p.Height,
+                        Format = $"YUV {p.Format}",
+                        BitDepth = bitDepth,
+                        ColorSpace = $"{p.ColorSpace} ({p.Range} Range)",
+                        MasterMagickImage = masterImg
+                    };
+                    _currentDecoded.Frames.Add(new DecodedFrame
+                    {
+                        Source = bmp,
+                        Width = p.Width,
+                        Height = p.Height,
+                        DelayMs = 100
+                    });
+
+                    var item = _imageItems.FirstOrDefault(x => string.Equals(x.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+                    if (item == null)
+                    {
+                        item = new ImageItem
+                        {
+                            FilePath = filePath,
+                            Width = p.Width,
+                            Height = p.Height,
+                            FormatName = $"YUV {p.Format}",
+                            Thumbnail = bmp,
+                            FileSizeBytes = new FileInfo(filePath).Length
+                        };
+                        _imageItems.Insert(0, item);
+                        _currentIndex = 0;
+                    }
+
+                    PanelEmptyState.Visibility = Visibility.Collapsed;
+                    Title = $"{Path.GetFileName(filePath)} [YUV {p.Width}×{p.Height} {p.Format}] — ViewCraft Studio";
+
+                    StatusDimensions.Text = $"{p.Width} × {p.Height} px";
+                    StatusFormat.Text = $"YUV {p.Format} ({p.ColorSpace})";
+                    StatusFileSize.Text = item.FileSizeFormatted;
+
+                    FitToWindow();
+                    _adjustments.Reset();
+                    UpdateAdjustmentControlsFromModel();
+                    UpdateDisplayImage(bmp);
+                    _ = UpdateHistogramAsync(bmp);
+
+                    ImgMiniMap.Source = bmp;
+                    UpdateMiniMapViewport();
+
+                    _currentMetadata = new ImageMetadata
+                    {
+                        Format = $"YUV Video / Frame ({p.Format})",
+                        Width = p.Width,
+                        Height = p.Height,
+                        BitDepth = bitDepth,
+                        ColorSpace = $"{p.ColorSpace} ({p.Range} Range)",
+                        Compression = "Uncompressed Raw YUV Frame",
+                        FileSizeBytes = item.FileSizeBytes,
+                        CameraMake = "Qualcomm / Exynos / Video Subsystem",
+                        CameraModel = $"{p.Format} ({p.StridePreset})",
+                        Software = $"ViewCraft YUV Demuxer (Stride={p.GetYStride()} px, Offset={p.HeaderOffset} B)"
+                    };
+                    PopulateMetadataView(_currentMetadata);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to decode YUV frame: {ex.Message}", "ViewCraft Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
         private async void OpenMipiRawFile(string filePath)
         {
             var mipiDlg = new MipiRawDialog(filePath) { Owner = this };
@@ -157,12 +254,21 @@ namespace ViewCraft
                     var p = mipiDlg.ResultParameters;
                     var (bmp, masterImg) = await MipiRawEngine.DecodeMipiRawAsync(filePath, p);
 
+                    int bitDepth = p.Format switch
+                    {
+                        MipiFormat.Raw8 => 8,
+                        MipiFormat.MipiRaw10 or MipiFormat.QualcommPlain10Le or MipiFormat.QualcommPlain10Msb => 10,
+                        MipiFormat.MipiRaw12 or MipiFormat.QualcommPlain12Le or MipiFormat.QualcommPlain12Msb => 12,
+                        MipiFormat.MipiRaw14 or MipiFormat.QualcommPlain14Le or MipiFormat.QualcommPlain14Msb => 14,
+                        _ => 16
+                    };
+
                     _currentDecoded = new DecodedImageResult
                     {
                         Width = p.Width,
                         Height = p.Height,
                         Format = $"MIPI {p.Format} ({p.Pattern})",
-                        BitDepth = p.Format == MipiFormat.Raw8 ? 8 : (p.Format == MipiFormat.MipiRaw10 ? 10 : (p.Format == MipiFormat.MipiRaw12 ? 12 : 16)),
+                        BitDepth = bitDepth,
                         ColorSpace = "Linear sRGB",
                         MasterMagickImage = masterImg
                     };
@@ -211,9 +317,9 @@ namespace ViewCraft
                         Format = $"MIPI CSI-2 {p.Format}",
                         Width = p.Width,
                         Height = p.Height,
-                        BitDepth = p.Format == MipiFormat.Raw8 ? 8 : (p.Format == MipiFormat.MipiRaw10 ? 10 : 12),
+                        BitDepth = bitDepth,
                         ColorSpace = "Linear Bayer CFA Sensor",
-                        Compression = p.Format == MipiFormat.Raw8 ? "Unpacked 8-bit" : "MIPI CSI-2 Packed",
+                        Compression = p.Format == MipiFormat.Raw8 ? "Unpacked 8-bit" : (p.Format == MipiFormat.MipiRaw10 || p.Format == MipiFormat.MipiRaw12 || p.Format == MipiFormat.MipiRaw14 ? "MIPI CSI-2 Packed" : "Qualcomm/Exynos Plain16"),
                         FileSizeBytes = item.FileSizeBytes,
                         CameraMake = "Embedded CSI-2 / ISP Dump",
                         CameraModel = $"{p.Pattern} Bayer Pattern Sensor",
@@ -230,6 +336,17 @@ namespace ViewCraft
 
         private void LoadFileAndDirectory(string selectedFilePath)
         {
+            if (CodecEngine.IsYuvFile(selectedFilePath))
+            {
+                OpenYuvFile(selectedFilePath);
+                return;
+            }
+            if (CodecEngine.IsMipiOrSensorRaw(selectedFilePath))
+            {
+                OpenMipiRawFile(selectedFilePath);
+                return;
+            }
+
             string dir = Path.GetDirectoryName(selectedFilePath) ?? string.Empty;
             if (string.IsNullOrEmpty(dir)) return;
 
@@ -292,6 +409,10 @@ namespace ViewCraft
             {
                 if (item.Thumbnail == null)
                 {
+                    if (CodecEngine.IsYuvFile(item.FilePath) || CodecEngine.IsMipiOrSensorRaw(item.FilePath))
+                    {
+                        continue; // Raw dumps without container headers are decoded on-demand
+                    }
                     var thumb = await CodecEngine.LoadThumbnailAsync(item.FilePath, 160);
                     item.Thumbnail = thumb;
                     item.IsLoaded = true;
@@ -318,8 +439,13 @@ namespace ViewCraft
             // Stop any running animations
             StopAnimation();
 
-            string ext = item.Extension.ToLowerInvariant();
-            if (ext == ".raw" || ext == ".mipi" || ext == ".bayer" || ext == ".nvraw")
+            if (CodecEngine.IsYuvFile(item.FilePath))
+            {
+                OpenYuvFile(item.FilePath);
+                return;
+            }
+
+            if (CodecEngine.IsMipiOrSensorRaw(item.FilePath))
             {
                 OpenMipiRawFile(item.FilePath);
                 return;
@@ -1195,6 +1321,7 @@ namespace ViewCraft
                     case Key.D8 or Key.NumPad8: SetColorLabel("Green"); e.Handled = true; return;
                     case Key.D9 or Key.NumPad9: SetColorLabel("Blue"); e.Handled = true; return;
                     case Key.M: MenuOpenMipiRaw_Click(this, new RoutedEventArgs()); e.Handled = true; return;
+                    case Key.Y: MenuOpenYuv_Click(this, new RoutedEventArgs()); e.Handled = true; return;
                 }
             }
 
