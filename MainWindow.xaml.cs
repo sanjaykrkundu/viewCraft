@@ -611,10 +611,10 @@ namespace ViewCraft
         private void HistoCheck_Changed(object sender, RoutedEventArgs e)
         {
             if (HistogramGraph == null) return;
-            HistogramGraph.ShowLuma = ChkHistoLuma.IsChecked == true;
-            HistogramGraph.ShowRed = ChkHistoRed.IsChecked == true;
-            HistogramGraph.ShowGreen = ChkHistoGreen.IsChecked == true;
-            HistogramGraph.ShowBlue = ChkHistoBlue.IsChecked == true;
+            if (ChkHistoLuma != null) HistogramGraph.ShowLuma = ChkHistoLuma.IsChecked == true;
+            if (ChkHistoRed != null) HistogramGraph.ShowRed = ChkHistoRed.IsChecked == true;
+            if (ChkHistoGreen != null) HistogramGraph.ShowGreen = ChkHistoGreen.IsChecked == true;
+            if (ChkHistoBlue != null) HistogramGraph.ShowBlue = ChkHistoBlue.IsChecked == true;
         }
 
         private void BtnChannelRGB_Click(object sender, RoutedEventArgs e) => SetChannelMode(ChannelIsolationMode.AllRgb);
@@ -1233,7 +1233,7 @@ namespace ViewCraft
 
         private void CmbFilmstripFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ListFilmstrip == null) return;
+            if (ListFilmstrip == null || CmbFilmstripFilter == null) return;
             int idx = CmbFilmstripFilter.SelectedIndex;
 
             switch (idx)
