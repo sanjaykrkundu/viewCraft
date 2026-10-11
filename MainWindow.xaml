@@ -105,6 +105,8 @@
                     <Separator Background="#3f3f46"/>
                     <MenuItem Header="Flip _Horizontal (H)" Click="MenuFlipH_Click"/>
                     <MenuItem Header="Flip _Vertical (V)" Click="MenuFlipV_Click"/>
+                    <Separator Background="#3f3f46"/>
+                    <MenuItem Header="_Crop Image &amp; Aspect Ratio... (X)" Click="MenuCrop_Click"/>
                 </MenuItem>
                 <MenuItem Header="_Color &amp; Tone">
                     <MenuItem Header="_Auto Tone Enhance" Click="MenuAutoEnhance_Click"/>
@@ -146,6 +148,7 @@
 
                         <Button Style="{StaticResource ToolButton}" Content="⟳ Rotate" Click="MenuRotateCW_Click"/>
                         <Button Style="{StaticResource ToolButton}" Content="⇄ Flip" Click="MenuFlipH_Click"/>
+                        <Button Style="{StaticResource ToolButton}" Content="✂ Crop (X)" Click="MenuCrop_Click"/>
                         <Button Style="{StaticResource ToolButton}" Content="⚖ Compare" Click="MenuCompare_Click"/>
                         <Button Style="{StaticResource ToolButton}" Content="⚡ Batch" Click="MenuBatch_Click"/>
                         <Button x:Name="BtnSlideshowToggle" Style="{StaticResource ToolButton}" Content="▶ Slideshow" Click="MenuSlideshow_Click"/>

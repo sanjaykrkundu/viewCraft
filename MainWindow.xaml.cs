@@ -71,6 +71,18 @@ namespace ViewCraft
             Drop += MainWindow_Drop;
         }
 
+        public void LoadFromCommandLine(string targetPath)
+        {
+            if (Directory.Exists(targetPath))
+            {
+                LoadDirectory(targetPath);
+            }
+            else if (File.Exists(targetPath))
+            {
+                LoadFileAndDirectory(targetPath);
+            }
+        }
+
         #region File Loading & Navigation
 
         private void MainWindow_Drop(object sender, DragEventArgs e)
@@ -813,6 +825,25 @@ namespace ViewCraft
             UpdateDisplayImage(bmp);
         }
 
+        private void MenuCrop_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentDecoded?.MasterMagickImage == null || MainImageDisplay.Source is not BitmapSource bmp) return;
+
+            var dlg = new CropDialog(bmp) { Owner = this };
+            if (dlg.ShowDialog() == true && dlg.ResultCropRect.HasValue)
+            {
+                var r = dlg.ResultCropRect.Value;
+                var geo = new MagickGeometry(r.X, r.Y, (uint)r.Width, (uint)r.Height);
+                _currentDecoded.MasterMagickImage.Crop(geo);
+                _currentDecoded.MasterMagickImage.ResetPage();
+
+                var croppedBmp = CodecEngine.ConvertMagickToBitmapSource(_currentDecoded.MasterMagickImage);
+                UpdateDisplayImage(croppedBmp);
+                FitToWindow();
+                _ = UpdateHistogramAsync(croppedBmp);
+            }
+        }
+
         #endregion
 
         #region Dialogs & Tools
@@ -1089,6 +1120,10 @@ namespace ViewCraft
                     break;
                 case Key.C:
                     MenuCompare_Click(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case Key.X:
+                    MenuCrop_Click(this, new RoutedEventArgs());
                     e.Handled = true;
                     break;
                 case Key.R:
